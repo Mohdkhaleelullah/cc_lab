@@ -1,0 +1,19 @@
+IAM → roles → create role
+
+Select AWS service, EC2 → next
+
+Select S3FullAccess → next
+
+role name → create role
+
+EC2 → launch instance
+
+connect → SSH client → copy chmod → connect
+
+* instance → actions → security → modify IAM role
+
+console:
+
+aws ec2 describe-instances
+
+aws s3 ls
