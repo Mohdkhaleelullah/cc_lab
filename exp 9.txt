@@ -1,0 +1,242 @@
+Step 1: Launch EC2 Instance #1 (Web Server 1)
+1. Open EC2
+Go to AWS Console → EC2 → Instances
+Click Launch Instance
+2. Configure Instance
+Name: webserver-1
+AMI: Amazon Linux 2
+Instance Type: t2.micro (free tier)
+3. Key Pair
+Create new or use existing key pair
+Download .pem file (important)
+4. Network Settings
+
+Create/Edit Security Group:
+
+Allow SSH (22) → Source: My IP
+Allow HTTP (80) → Source: 0.0.0.0/0
+5. Launch Instance
+Click Launch Instance
+6. Connect to Instance
+
+Use terminal (or EC2 Connect):
+
+ssh -i your-key.pem ec2-user@<PUBLIC-IP>
+7. Install Apache & Configure Page
+sudo yum update -y
+sudo yum install httpd -y
+sudo systemctl start httpd
+sudo systemctl enable httpd
+echo "This is Server 1" | sudo tee /var/www/html/index.html
+8. Test
+Open browser:
+http://<PUBLIC-IP>
+
+Should show: This is Server 1
+
+Step 1.2: Launch EC2 Instance #2 (Web Server 2)
+
+Repeat same steps but:
+
+Name: webserver-2
+
+Run:
+
+sudo yum update -y
+sudo yum install httpd -y
+sudo systemctl start httpd
+sudo systemctl enable httpd
+echo "This is Server 2" | sudo tee /var/www/html/index.html
+
+Test in browser:
+
+http://<PUBLIC-IP-2>
+⚖️ Step 2: Create Load Balancer
+🔐 2.1 Create Security Group for Load Balancer
+Go to EC2 → Security Groups → Create
+Name: lb-sg
+
+Add rules:
+
+HTTP (80) → 0.0.0.0/0
+(Optional) HTTPS (443)
+🌐 2.2 Create Application Load Balancer (ALB)
+Go to EC2 → Load Balancers → Create
+Choose: Application Load Balancer
+Basic Settings:
+Name: my-alb
+Scheme: Internet-facing
+IP type: IPv4
+🔊 2.3 Configure Listener
+HTTP (Port 80) → Default (keep it)
+🌍 2.4 Availability Zones
+Select your default VPC
+Choose at least 2 subnets (important)
+🔒 2.5 Attach Security Group
+Select lb-sg
+🎯 2.6 Create Target Group
+
+Click Create Target Group
+
+Name: web-servers-tg
+Target type: Instance
+Protocol: HTTP
+Port: 80
+Health Check Path: /
+
+Click Next
+
+➕ Register Targets
+Select:
+webserver-1
+webserver-2
+Click:
+Include as pending
+Register
+✅ 2.7 Finish Load Balancer
+Attach target group to ALB
+Click Create Load Balancer
+
+⏳ Wait 2–5 minutes
+
+🌍 Step 3: Test Load Balancer
+1. Get DNS Name
+EC2 → Load Balancers
+Select my-alb
+Copy DNS name
+
+Example:
+
+my-alb-123456.us-east-1.elb.amazonaws.com
+2. Open in Browser
+
+Paste DNS in browser
+
+✅ You’ll see:
+
+"This is Server 1" OR
+"This is Server 2"
+
+🔁 Refresh multiple times → traffic switches between servers
+
+🚀 Step 1: Create AMI from Your Working EC2
+
+(Use the instance where Apache + “Server 1” is already running)
+
+✅ Steps:
+Go to EC2 → Instances
+Select your instance (e.g., webserver-1)
+Click:
+Actions → Image and templates → Create image
+Fill:
+Image name: my-webserver-ami
+Description: optional
+Click Create Image
+⏳ Wait
+Go to EC2 → AMIs
+Wait until status = Available
+
+👉 This AMI is your pre-configured server template
+
+🚀 Step 2: Create Launch Template
+✅ Steps:
+Go to EC2 → Launch Templates
+Click Create launch template
+🔧 Configure:
+Name: my-launch-template
+AMI: Select your AMI (my-webserver-ami)
+Instance type: t2.micro
+Key pair: Select your .pem
+🔒 Security Group (IMPORTANT)
+
+👉 Choose EC2 instance security group, NOT load balancer SG
+
+Your instance SG must allow:
+
+HTTP (80) → from Load Balancer SG
+SSH (22) → from your IP
+
+💡 If confused:
+
+You can temporarily allow:
+HTTP (80) → 0.0.0.0/0
+📜 User Data
+Leave empty (AMI already has Apache)
+✅ Click:
+
+Create Launch Template
+
+🚀 Step 3: Create Auto Scaling Group (ASG)
+✅ 3.1 Basic Setup
+Go to EC2 → Auto Scaling Groups
+Click Create Auto Scaling Group
+
+Fill:
+
+Name: webserver-asg
+Launch Template: my-launch-template
+Version: Default
+
+Click Next
+
+🌐 3.2 Network Settings
+VPC: Default
+Subnets:
+👉 Select at least 2 subnets (VERY IMPORTANT)
+⚖️ Attach Load Balancer
+Select:
+✅ Attach to an existing load balancer
+Choose your ALB (my-alb)
+Choose:
+Existing target group → web-servers-tg
+❤️ Health Check
+Type: HTTP
+Grace Period: 300 seconds
+
+Click Next
+
+📊 3.3 Configure Group Size
+
+Set:
+
+Desired Capacity: 2
+Minimum: 1
+Maximum: 4
+
+👉 Means:
+
+Starts with 2 instances
+Can scale up to 4
+
+Click Next
+
+✅ 3.4 Review
+Click Create Auto Scaling Group
+🔍 Step 4: Verify Everything
+✅ Check Instances
+
+Go to:
+
+EC2 → Auto Scaling Groups → webserver-asg → Instances
+
+👉 You should see:
+
+2 instances launching automatically
+✅ Check Target Group
+Go to EC2 → Target Groups → web-servers-tg → Targets
+
+👉 Wait until:
+
+Status = Healthy
+🌍 Step 5: Test Load Balancer
+Go to:
+EC2 → Load Balancers → my-alb
+Copy DNS name
+
+Example:
+
+my-alb-xxxxx.elb.amazonaws.com
+Open in browser
+🔁 Refresh multiple times
+
+👉 You’ll see responses from different instances
