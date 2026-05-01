@@ -1,0 +1,18 @@
+IAM → IAM users → create user
+
+user name, check (provide user access…)
+custom password → next
+
+Attach policy directly
+select S3FullAccess, IAM user change Password
+
+next → Download csv.
+
+Signout
+
+IAM user → security credentials → create access key
+CLI → next → create → Download csv
+
+cmd:
+aws configure
+aws s3 mb s3://exam13082026 --region
