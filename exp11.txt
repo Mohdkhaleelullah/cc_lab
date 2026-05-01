@@ -1,0 +1,27 @@
+Lex → Bots → create Bot
+
+Bot name → next → Done
+
+intent name → Plain text → prompts
+
+Add slot → save → Back to intent list
+
+slot types → Add slot type → Add blank slot
+
+Save slot
+
+Add slot → custom slot type
+
+Advanced options → slot prompts
+
+Add → Add card group
+
+Initial response
+
+Confirmation
+
+Save intent
+
+Build
+
+Test
