@@ -1,0 +1,8 @@
+ssh -i "key.pem" ec2-user@PUBLIC-IP
+ping google.com
+--------------------------------------------------
+ssh -i "ex-3-1.pem" ec2-user@PUBLIC-IP
+exit
+scp -i "ex-3-1.pem" ex-3-2.pem ec2-user@PUBLIC-IP:/home/ec2-user/
+chmod 400 ex-3-2.pem
+ssh -i "ex-3-2.pem" ec2-user@PRIVATE-IP
